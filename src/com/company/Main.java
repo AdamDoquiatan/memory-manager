@@ -3,18 +3,70 @@ package com.company;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+
+class MemoryManager {
+
+    private ArrayList<ArrayList<String>> instructions;
+    private int mode;
+    private int totalMem;
+    private LinkedList<ArrayList<Integer>> allocatedMem = new LinkedList<>();
+    private LinkedList<ArrayList<Integer>> freeMem = new LinkedList<>();
+
+    public MemoryManager(ArrayList<ArrayList<String>> instructions) {
+        this.instructions = instructions;
+        this.mode = Integer.parseInt(instructions.get(0).get(0));
+        this.totalMem = Integer.parseInt(instructions.get(1).get(0));
+
+        System.out.println("Mode: " + this.mode);
+        System.out.println("TotalMemory: " + this.totalMem);
+        System.out.println(Arrays.deepToString(instructions.toArray()));
+    }
+
+    private void modeFirstFit() {
+        System.out.println("Running ModeFirstFit");
+    }
+
+    private void modeBestFit() {
+        System.out.println("Running ModeBestFit");
+    }
+
+    private void modeWorstFit() {
+        System.out.println("Running ModeWorstFit");
+    }
+
+    public void manageMemory() {
+
+        System.out.println("Now managing memory");
+
+        switch (this.mode) {
+            case 1:
+                modeFirstFit();
+                break;
+            case 2:
+                modeBestFit();
+                break;
+            case 3:
+                modeWorstFit();
+                break;
+        }
+
+
+
+
+
+    }
+
+}
 
 
 public class Main {
 
-    private static int mode;
-    private static int totalMemory;
-
-    public static ArrayList<ArrayList<String>> loadTextFile(String fileName) {
+    private static ArrayList<ArrayList<String>> loadTextFile(String fileName) {
         ArrayList<ArrayList<String>> instructions = new ArrayList<>();
 
         String line = null;
@@ -55,18 +107,14 @@ public class Main {
 
         String fileName = args[0];
         ArrayList<ArrayList<String>> instructions;
+
         instructions = loadTextFile(fileName);
 
-        // Prints an arraylist of arraylists to strings
-        System.out.println(Arrays.deepToString(instructions.toArray()));
+        MemoryManager memoryManager = new MemoryManager(instructions);
+        memoryManager.manageMemory();
 
-        mode = Integer.parseInt(instructions.get(0).get(0));
-        totalMemory = Integer.parseInt(instructions.get(1).get(0));
-
-        System.out.println("Mode: " + mode);
-        System.out.println("TotalMemory: " + totalMemory);
 
     }
 
-    }
+}
 
