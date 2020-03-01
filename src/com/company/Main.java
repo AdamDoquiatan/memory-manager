@@ -123,13 +123,59 @@ class MemoryManager implements Comparable {
                 System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
         }
 
-
-
-
-
-
-    private void modeWorstFit() {
+    private void modeWorstFit(ArrayList<String> newChunk) {
         System.out.println("Running ModeWorstFit");
+
+        int pid = Integer.parseInt(newChunk.get(1));
+        int entryBase = 0;
+        int entryLimit = Integer.parseInt(newChunk.get(2));
+        int newChunkSize = entryLimit;
+
+
+        // Mem empty -- stick first thing at 0
+        if (allocMemList.isEmpty()) {
+            System.out.println("Allocating mem to empty list");
+            freeMemList.get(0).set(1, entryLimit + 1);
+
+            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+            allocMemList.add(entry);
+
+            // Find where to stick the next entry
+        } else {
+            int worstFitSize = Integer.MIN_VALUE;
+            int worstFitBase = -1;
+            int worstFitIndex = -1;
+
+            for (int j = 0; j < freeMemList.size(); j++) {
+
+                entryBase = freeMemList.get(j).get(1);
+
+                // Checks that new chunk doesn't go beyond max memory
+                if (entryBase + entryLimit <= totalMem) {
+                    System.out.println(entryBase >= freeMemList.get(j).get(1));
+                    System.out.println(entryBase < freeMemList.get(j).get(2));
+
+                    // Checks if new chunk will fit in free space -- tracks largest free spot
+                    int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
+                    if (newChunkSize <= freeSpotSize && freeSpotSize > worstFitSize) {
+                        worstFitSize = freeSpotSize;
+                        worstFitBase = freeMemList.get(j).get(1);
+                        worstFitIndex = j;
+                    }
+                } else {
+                    System.out.println("No memory remaining (maybe run compaction)");
+                    return;
+                }
+            }
+            freeMemList.get(worstFitIndex).set(1, worstFitBase + newChunkSize + 1);
+
+            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, worstFitBase, worstFitBase + newChunkSize));
+            allocMemList.add(entry);
+
+        }
+
+        System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+        System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
     }
 
     private void deallocateMemory(int pid) {
@@ -228,7 +274,7 @@ class MemoryManager implements Comparable {
                             modeBestFit(newChunk);
                             break;
                         case 3:
-                            modeWorstFit();
+                            modeWorstFit(newChunk);
                             break;
                     }
                     break;
