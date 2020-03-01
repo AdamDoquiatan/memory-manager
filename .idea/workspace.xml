@@ -6,7 +6,6 @@
       <change beforePath="$PROJECT_DIR$/out/production/MemoryManager/com/company/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/MemoryManager/com/company/Main.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/MemoryManager/com/company/MemoryManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/MemoryManager/com/company/MemoryManager.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/company/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/company/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_input.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test_input.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -75,7 +74,7 @@
       <workItem from="1582925513359" duration="1226000" />
       <workItem from="1583000391810" duration="2666000" />
       <workItem from="1583003403545" duration="524000" />
-      <workItem from="1583003953557" duration="28129000" />
+      <workItem from="1583003953557" duration="30449000" />
     </task>
     <servers />
   </component>

@@ -1,6 +1,5 @@
 package com.company;
 
-import javax.management.ConstructorParameters;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-class MemoryManager implements Comparable {
+class MemoryManager {
 
     private ArrayList<ArrayList<String>> instructions;
     private int mode;
@@ -26,7 +25,7 @@ class MemoryManager implements Comparable {
         System.out.println(Arrays.deepToString(instructions.toArray()));
     }
 
-    private void modeFirstFit(ArrayList<String> newChunk) {
+    private void modeFirstFit(ArrayList<String> newChunk, boolean triedCompaction) {
         System.out.println("Running ModeFirstFit");
 
         int pid = Integer.parseInt(newChunk.get(1));
@@ -47,18 +46,21 @@ class MemoryManager implements Comparable {
                 entryBase = freeMemList.get(j).get(1);
 
                 if (entryBase + entryLimit <= totalMem) {
-                    System.out.println(entryBase >= freeMemList.get(j).get(1));
-                    System.out.println(entryBase < freeMemList.get(j).get(2));
-
                     if (entryBase >= freeMemList.get(j).get(1) && entryLimit < freeMemList.get(j).get(2)) {
                         freeMemList.get(j).set(1, entryBase + entryLimit + 1);
 
                         ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
                         allocMemList.add(entry);
+                        Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
                         break;
                     }
                 } else {
-                    System.out.println("No memory remaining (maybe run compaction)");
+                    if (!triedCompaction) {
+                        this.runCompation();
+                        modeFirstFit(newChunk, true);
+                    }
+
+                    break;
                 }
             }
         }
@@ -67,7 +69,7 @@ class MemoryManager implements Comparable {
         System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
     }
 
-    private void modeBestFit(ArrayList<String> newChunk) {
+    private void modeBestFit(ArrayList<String> newChunk, boolean triedCompaction) {
         System.out.println("Running ModeBestFit");
 
                 int pid = Integer.parseInt(newChunk.get(1));
@@ -97,9 +99,6 @@ class MemoryManager implements Comparable {
 
                         // Checks that new chunk doesn't go beyond max memory
                         if (entryBase + entryLimit <= totalMem) {
-                            System.out.println(entryBase >= freeMemList.get(j).get(1));
-                            System.out.println(entryBase < freeMemList.get(j).get(2));
-
                             // Checks if new chunk will fit in free space -- tracks smallest free spot
                             int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
                             if (newChunkSize <= freeSpotSize && freeSpotSize < bestFitSize) {
@@ -108,7 +107,10 @@ class MemoryManager implements Comparable {
                                   bestFitIndex = j;
                             }
                         } else {
-                            System.out.println("No memory remaining (maybe run compaction)");
+                            if (!triedCompaction) {
+                                this.runCompation();
+                                modeFirstFit(newChunk, true);
+                            }
                             return;
                         }
                     }
@@ -116,14 +118,14 @@ class MemoryManager implements Comparable {
 
                     ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, bestFitBase, bestFitBase + newChunkSize));
                     allocMemList.add(entry);
-
+                    Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
                 }
 
                 System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
                 System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
         }
 
-    private void modeWorstFit(ArrayList<String> newChunk) {
+    private void modeWorstFit(ArrayList<String> newChunk, boolean triedCompaction) {
         System.out.println("Running ModeWorstFit");
 
         int pid = Integer.parseInt(newChunk.get(1));
@@ -152,9 +154,6 @@ class MemoryManager implements Comparable {
 
                 // Checks that new chunk doesn't go beyond max memory
                 if (entryBase + entryLimit <= totalMem) {
-                    System.out.println(entryBase >= freeMemList.get(j).get(1));
-                    System.out.println(entryBase < freeMemList.get(j).get(2));
-
                     // Checks if new chunk will fit in free space -- tracks largest free spot
                     int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
                     if (newChunkSize <= freeSpotSize && freeSpotSize > worstFitSize) {
@@ -163,7 +162,10 @@ class MemoryManager implements Comparable {
                         worstFitIndex = j;
                     }
                 } else {
-                    System.out.println("No memory remaining (maybe run compaction)");
+                    if (!triedCompaction) {
+                        this.runCompation();
+                        modeFirstFit(newChunk, true);
+                    }
                     return;
                 }
             }
@@ -171,7 +173,7 @@ class MemoryManager implements Comparable {
 
             ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, worstFitBase, worstFitBase + newChunkSize));
             allocMemList.add(entry);
-
+            Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
         }
 
         System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
@@ -190,16 +192,14 @@ class MemoryManager implements Comparable {
                 //TODO: Doesn't always merge free adjacent partitions (but does sometimes?)
                 boolean merged = false;
                 for (ArrayList<Integer> freeChunk : freeMemList) {
-                    System.out.println("Alloc Base: " + (allocChunkBase - 1));
-                    System.out.println("Free Limit: " + (freeChunk.get(2)));
+//                    System.out.println("Alloc Base: " + (allocChunkBase - 1));
+//                    System.out.println("Free Limit: " + (freeChunk.get(2)));
                     if (allocChunkBase - 1 == freeChunk.get(2)) {
-                        System.out.println("Got In here!");
                         // merge chunks -- alloc is above free
                         freeChunk.set(2, allocChunkLimit);
                         merged = true;
                         break;
                     } else if (allocChunkLimit + 1 == freeChunk.get(1)) {
-                        System.out.println("Got In here2!");
                         // merge chunks -- alloc is below free
                         freeChunk.set(1, allocChunkBase);
                         merged = true;
@@ -213,7 +213,7 @@ class MemoryManager implements Comparable {
                     freeMemList.add(newFreeChunk);
                     Collections.sort(freeMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
 
-                    System.out.println("Index of newfreechunk: " + freeMemList.indexOf(newFreeChunk));
+//                    System.out.println("Index of newfreechunk: " + freeMemList.indexOf(newFreeChunk));
                     int freeChunkIndex = freeMemList.indexOf(newFreeChunk);
 
                     // TODO: Messes up the output
@@ -229,17 +229,38 @@ class MemoryManager implements Comparable {
                         freeMemList.get(freeChunkIndex + 1).set(1, newFreeChunk.get(2) + 1);
                     }
                 }
+
+                System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+                System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
                 break;
             }
         }
     }
 
+    private void runCompation() {
+        System.out.println("Running Compaction");
+
+        ArrayList<ArrayList<Integer>> newAllocMemList = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> newFreeMemList = new ArrayList<>();
+        int prevBase = 0;
+
+        for (ArrayList<Integer> chunk : this.allocMemList) {
+            newAllocMemList.add(new ArrayList<Integer>(Arrays.asList(chunk.get(0), prevBase, chunk.get(2))));
+            prevBase = chunk.get(2) + 1;
+        }
+        newFreeMemList.add(new ArrayList<Integer>(Arrays.asList(null, prevBase, this.totalMem)));
+        this.allocMemList = newAllocMemList;
+        this.freeMemList = newFreeMemList;
+
+        System.out.println("new Free Mem List: " + Arrays.deepToString(freeMemList.toArray()));
+        System.out.println("new Alloc Mem List: " + Arrays.deepToString(allocMemList.toArray()));
+    }
+
+
     private void printMemoryAllocations() {
         System.out.println("-------------- State of Memory -------------");
         String strFreeChunks = "Free Chunks: ";
         for (ArrayList<Integer> chunk : freeMemList) {
-//                    System.out.println("ff: " + Arrays.toString(chunk.toArray()));
-//                    System.out.println("ff: " + chunk.get(1));
             strFreeChunks += "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
         }
         System.out.println(strFreeChunks);
@@ -268,13 +289,13 @@ class MemoryManager implements Comparable {
                 case "A":
                     switch (this.mode) {
                         case 1:
-                            modeFirstFit(newChunk);
+                            modeFirstFit(newChunk, false);
                             break;
                         case 2:
-                            modeBestFit(newChunk);
+                            modeBestFit(newChunk, false);
                             break;
                         case 3:
-                            modeWorstFit(newChunk);
+                            modeWorstFit(newChunk, false);
                             break;
                     }
                     break;
@@ -290,12 +311,6 @@ class MemoryManager implements Comparable {
         }
 
     }
-
-
-    @Override
-    public int compareTo(Object o) {
-        return 0;
-    }
 }
 
 
@@ -307,9 +322,6 @@ public class Main {
         String line = null;
 
         try {
-            Path pathToFile = Paths.get(fileName);
-            System.out.println(pathToFile.toAbsolutePath());
-
             // FileReader reads text files in the default encoding.
             FileReader fileReader =
                     new FileReader(fileName);
@@ -322,7 +334,6 @@ public class Main {
                 System.out.println(line);
                 line = line.replaceAll("( )+", " ");
                 ArrayList<String> words = new ArrayList<>(Arrays.asList(line.split(" ")));
-//                System.out.println(Arrays.toString(words));
                 instructions.add(words);
             }
 
