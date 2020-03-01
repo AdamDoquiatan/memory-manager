@@ -3,8 +3,6 @@ package com.company;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -14,8 +12,8 @@ class MemoryManager {
     private ArrayList<ArrayList<String>> instructions;
     private int mode;
     private int totalMem;
-    private LinkedList<ArrayList<Integer>> allocatedMem = new LinkedList<>();
-    private LinkedList<ArrayList<Integer>> freeMem = new LinkedList<>();
+    private ArrayList<ArrayList<Integer>> allocMemList = new ArrayList<>();
+    private ArrayList<ArrayList<Integer>> freeMemList = new ArrayList<>();
 
     public MemoryManager(ArrayList<ArrayList<String>> instructions) {
         this.instructions = instructions;
@@ -29,7 +27,68 @@ class MemoryManager {
 
     private void modeFirstFit() {
         System.out.println("Running ModeFirstFit");
+
+        for (int i = 0; i < instructions.size(); i++) {
+
+            String task = instructions.get(i).get(0);
+            switch (task) {
+                case "A":
+                    int pid = Integer.parseInt(instructions.get(i).get(1));
+                    int entryBase = 0;
+                    int entryLimit = Integer.parseInt(instructions.get(i).get(2));
+
+                    // Mem empty -- stick first thing at 0
+                    if (allocMemList.isEmpty()) {
+                        System.out.println("Allocating mem to empty list");
+                        freeMemList.get(0).set(1, entryLimit);
+
+                        ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+                        allocMemList.add(entry);
+
+                    // Find where to stick the next entry
+                    } else {
+                        for (int j = 0; j < freeMemList.size(); j++) {
+                            System.out.println("here 1");
+
+                            entryBase = freeMemList.get(j).get(1) + 1;
+                            System.out.println("Entry Base: " + entryBase);
+
+                            if (entryBase + entryLimit <= totalMem) {
+                                System.out.println("here 2");
+
+                                System.out.println(entryBase >= freeMemList.get(j).get(1));
+                                System.out.println(entryBase < freeMemList.get(j).get(2));
+
+                                if (entryBase >= freeMemList.get(j).get(1) && entryLimit < freeMemList.get(j).get(2)) {
+                                    System.out.println("here 3");
+                                    freeMemList.get(j).set(1, entryBase + entryLimit);
+
+                                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+                                    allocMemList.add(entry);
+                                    break;
+                                } else {
+                                    System.out.println("here 5");
+                                }
+                            } else {
+                                System.out.println("No memory remaining (maybe run compaction)");
+                            }
+                        }
+                    }
+
+                    System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+                    System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+
+                    break;
+                case "D":
+                    break;
+                case "P":
+                    break;
+
+
+            }
+        }
     }
+
 
     private void modeBestFit() {
         System.out.println("Running ModeBestFit");
@@ -40,8 +99,10 @@ class MemoryManager {
     }
 
     public void manageMemory() {
-
         System.out.println("Now managing memory");
+
+        ArrayList<Integer> freeMemInit = new ArrayList<>(Arrays.asList(null, 0, totalMem));
+        freeMemList.add(freeMemInit);
 
         switch (this.mode) {
             case 1:
@@ -54,9 +115,6 @@ class MemoryManager {
                 modeWorstFit();
                 break;
         }
-
-
-
 
 
     }
@@ -83,7 +141,7 @@ public class Main {
             BufferedReader bufferedReader =
                     new BufferedReader(fileReader);
 
-            while((line = bufferedReader.readLine()) != null) {
+            while ((line = bufferedReader.readLine()) != null) {
                 System.out.println(line);
                 line = line.replaceAll("( )+", " ");
                 ArrayList<String> words = new ArrayList<>(Arrays.asList(line.split(" ")));
