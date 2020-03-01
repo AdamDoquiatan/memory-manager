@@ -1,5 +1,6 @@
 package com.company;
 
+import javax.management.ConstructorParameters;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -7,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-class MemoryManager {
+class MemoryManager implements Comparable {
 
     private ArrayList<ArrayList<String>> instructions;
     private int mode;
@@ -95,6 +96,60 @@ class MemoryManager {
         System.out.println("Running ModeWorstFit");
     }
 
+    private void deallocateMemory(int pid) {
+        System.out.println("Deallocating Memory for PID: " + pid);
+
+        for(ArrayList<Integer> chunk : allocMemList) {
+            if(chunk.get(0) == pid) {
+                int allocChunkBase = chunk.get(1);
+                int allocChunkLimit = chunk.get(2);
+                allocMemList.remove(chunk);
+
+                boolean merged = false;
+                for(ArrayList<Integer> freeChunk : freeMemList) {
+                    System.out.println("Alloc Base: " + (allocChunkBase - 1));
+                    System.out.println("Free Limit: " + (freeChunk.get(2)));
+                    if (allocChunkBase - 1 == freeChunk.get(2)) {
+                        System.out.println("Got In here!");
+                        // merge chunks -- alloc is above free
+                        freeChunk.set(2, allocChunkLimit);
+                        merged = true;
+                        break;
+                    } else if (allocChunkLimit + 1 == freeChunk.get(1)) {
+                        System.out.println("Got In here2!");
+                        // merge chunks -- alloc is below free
+                        freeChunk.set(1, allocChunkBase);
+                        merged = true;
+                        break;
+                    }
+                }
+
+                if (!merged) {
+                    // add and sort
+                    ArrayList<Integer> newFreeChunk = new ArrayList<Integer>(Arrays.asList(null, allocChunkBase, allocChunkLimit));
+                    freeMemList.add(newFreeChunk);
+                    Collections.sort(freeMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
+
+                    System.out.println("Index of newfreechunk: " + freeMemList.indexOf(newFreeChunk));
+                    int freeChunkIndex = freeMemList.indexOf(newFreeChunk);
+
+                    //Checks if new floor is lesser than below mem's ceiling -- makes new arraylist
+//                if(freeMemList.size() > freeChunkIndex + 1 && newFreeChunk.get(1) <= freeMemList.get(freeChunkIndex + 1).get(2)) {
+//                    freeMemList.add(new ArrayList<Integer>(Arrays.asList(null, freeMemList.get(freeChunkIndex + 1).get(1), newFreeChunk.get(1) - 1)));
+//                    freeMemList.get(freeChunkIndex + 1).set(1, newFreeChunk.get(2) + 1);
+//                    Collections.sort(freeMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
+//                }
+
+                    // Checks if new ceiling is larger than above mem's base -- adjusts above's floor
+                    if (freeMemList.size() > freeChunkIndex + 1 && newFreeChunk.get(2) >= freeMemList.get(freeChunkIndex + 1).get(1)) {
+                        freeMemList.get(freeChunkIndex + 1).set(1, newFreeChunk.get(2) + 1);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     private void printMemoryAllocations() {
         System.out.println("-------------- State of Memory -------------");
         String strFreeChunks = "Free Chunks: ";
@@ -112,6 +167,8 @@ class MemoryManager {
 
         System.out.println(strAllocChunks);
     }
+
+
 
     public void manageMemory() {
         System.out.println("Now managing memory");
@@ -140,6 +197,9 @@ class MemoryManager {
                 }
                 break;
             case "D":
+                int pid = Integer.parseInt(instructions.get(i).get(1));
+                this.deallocateMemory(pid);
+
                 break;
             case "P":
                 this.printMemoryAllocations();
@@ -149,6 +209,11 @@ class MemoryManager {
 
     }
 
+
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
 }
 
 
