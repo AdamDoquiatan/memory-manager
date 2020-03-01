@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d6173c35-dd96-4426-8bdf-c988e340ea25" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/test_input2.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/MemoryManager/com/company/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/MemoryManager/com/company/Main.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/MemoryManager/com/company/MemoryManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/MemoryManager/com/company/MemoryManager.class" afterDir="false" />
@@ -21,12 +22,16 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.last.edited" value="SDKs" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\adamd\IdeaProjects\MemoryManager" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\adamd\IdeaProjects\MemoryManager" />
       <recent name="C:\Users\adamd\IdeaProjects\MemoryManager\src" />
@@ -48,7 +53,7 @@
     <configuration name="Main" type="Application" factoryName="Application" temporary="true">
       <option name="MAIN_CLASS_NAME" value="com.company.Main" />
       <module name="MemoryManager" />
-      <option name="PROGRAM_PARAMETERS" value="test_input.txt" />
+      <option name="PROGRAM_PARAMETERS" value="test_input2.txt" />
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
       <method v="2">
@@ -74,7 +79,8 @@
       <workItem from="1582925513359" duration="1226000" />
       <workItem from="1583000391810" duration="2666000" />
       <workItem from="1583003403545" duration="524000" />
-      <workItem from="1583003953557" duration="30449000" />
+      <workItem from="1583003953557" duration="30514000" />
+      <workItem from="1583090210809" duration="6548000" />
     </task>
     <servers />
   </component>

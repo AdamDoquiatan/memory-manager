@@ -3,8 +3,6 @@ package com.company;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 class MemoryManager {
@@ -26,19 +24,25 @@ class MemoryManager {
     }
 
     private void modeFirstFit(ArrayList<String> newChunk, boolean triedCompaction) {
-        System.out.println("Running ModeFirstFit");
 
         int pid = Integer.parseInt(newChunk.get(1));
         int entryBase = 0;
-        int entryLimit = Integer.parseInt(newChunk.get(2));;
+        int entryLimit = Integer.parseInt(newChunk.get(2));
+
+        System.out.println("Running ModeFirstFit for PID: " + pid);
 
         // Mem empty -- stick first thing at 0
         if (allocMemList.isEmpty()) {
-            System.out.println("Allocating mem to empty list");
-            freeMemList.get(0).set(1, entryLimit + 1);
+            if (entryLimit <= totalMem) {
+                System.out.println("Allocating mem to empty list");
+                freeMemList.get(0).set(1, entryLimit);
 
-            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
-            allocMemList.add(entry);
+                ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit - 1));
+                allocMemList.add(entry);
+            } else {
+                System.out.println("Cannot fit PID " + pid + " in memory!");
+                return;
+            }
 
             // Find where to stick the next entry
         } else {
@@ -58,9 +62,10 @@ class MemoryManager {
                     if (!triedCompaction) {
                         this.runCompation();
                         modeFirstFit(newChunk, true);
+                    } else {
+                        System.out.println("Cannot fit PID " + pid + " in memory!");
                     }
-
-                    break;
+                    return;
                 }
             }
         }
@@ -70,77 +75,95 @@ class MemoryManager {
     }
 
     private void modeBestFit(ArrayList<String> newChunk, boolean triedCompaction) {
-        System.out.println("Running ModeBestFit");
-
-                int pid = Integer.parseInt(newChunk.get(1));
-                int entryBase = 0;
-                int entryLimit = Integer.parseInt(newChunk.get(2));
-                int newChunkSize = entryLimit;
-
-
-                // Mem empty -- stick first thing at 0
-                if (allocMemList.isEmpty()) {
-                    System.out.println("Allocating mem to empty list");
-                    freeMemList.get(0).set(1, entryLimit + 1);
-
-                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
-                    allocMemList.add(entry);
-
-                    // Find where to stick the next entry
-                } else {
-                    int bestFitSize = Integer.MAX_VALUE;
-                    int bestFitBase = -1;
-                    int bestFitIndex = -1;
-
-                    for (int j = 0; j < freeMemList.size(); j++) {
-
-                        entryBase = freeMemList.get(j).get(1);
-
-
-                        // Checks that new chunk doesn't go beyond max memory
-                        if (entryBase + entryLimit <= totalMem) {
-                            // Checks if new chunk will fit in free space -- tracks smallest free spot
-                            int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
-                            if (newChunkSize <= freeSpotSize && freeSpotSize < bestFitSize) {
-                                  bestFitSize = freeSpotSize;
-                                  bestFitBase = freeMemList.get(j).get(1);
-                                  bestFitIndex = j;
-                            }
-                        } else {
-                            if (!triedCompaction) {
-                                this.runCompation();
-                                modeFirstFit(newChunk, true);
-                            }
-                            return;
-                        }
-                    }
-                    freeMemList.get(bestFitIndex).set(1, bestFitBase + newChunkSize + 1);
-
-                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, bestFitBase, bestFitBase + newChunkSize));
-                    allocMemList.add(entry);
-                    Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
-                }
-
-                System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
-                System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
-        }
-
-    private void modeWorstFit(ArrayList<String> newChunk, boolean triedCompaction) {
-        System.out.println("Running ModeWorstFit");
 
         int pid = Integer.parseInt(newChunk.get(1));
         int entryBase = 0;
         int entryLimit = Integer.parseInt(newChunk.get(2));
         int newChunkSize = entryLimit;
 
+        System.out.println("Running ModeBestFit for PID: " + pid);
 
         // Mem empty -- stick first thing at 0
         if (allocMemList.isEmpty()) {
-            System.out.println("Allocating mem to empty list");
-            freeMemList.get(0).set(1, entryLimit + 1);
+            if (entryLimit <= totalMem) {
+                System.out.println("Allocating mem to empty list");
+                freeMemList.get(0).set(1, entryLimit);
 
-            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+                ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit - 1));
+                allocMemList.add(entry);
+            } else {
+                System.out.println("Cannot fit PID " + pid + " in memory!");
+                return;
+            }
+
+            // Find where to stick the next entry
+        } else {
+            int bestFitSize = Integer.MAX_VALUE;
+            int bestFitBase = -1;
+            int bestFitIndex = -1;
+
+            for (int j = 0; j < freeMemList.size(); j++) {
+
+                entryBase = freeMemList.get(j).get(1);
+
+                // Checks that new chunk doesn't go beyond max memory
+                if (entryBase + entryLimit <= totalMem) {
+                    // Checks if new chunk will fit in free space -- tracks smallest free spot
+                    int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
+                    if (newChunkSize <= freeSpotSize && freeSpotSize < bestFitSize) {
+                        bestFitSize = freeSpotSize;
+                        bestFitBase = freeMemList.get(j).get(1);
+                        bestFitIndex = j;
+                    }
+                } else {
+                    if (!triedCompaction) {
+                        this.runCompation();
+                        modeFirstFit(newChunk, true);
+                    } else {
+                        System.out.println("Cannot fit PID " + pid + " in memory!");
+                    }
+                    return;
+                }
+
+            }
+            freeMemList.get(bestFitIndex).set(1, bestFitBase + newChunkSize + 1);
+
+            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, bestFitBase, bestFitBase + newChunkSize));
             allocMemList.add(entry);
+            Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
+
+            System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+            System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+            return;
+
+        }
+
+
+
+    }
+
+    private void modeWorstFit(ArrayList<String> newChunk, boolean triedCompaction) {
+
+        int pid = Integer.parseInt(newChunk.get(1));
+        int entryBase = 0;
+        int entryLimit = Integer.parseInt(newChunk.get(2));
+        int newChunkSize = entryLimit;
+
+        System.out.println("Running ModeWorstFit for PID: " + pid);
+
+
+        // Mem empty -- stick first thing at 0
+        if (allocMemList.isEmpty()) {
+            if (entryLimit <= totalMem) {
+                System.out.println("Allocating mem to empty list");
+                freeMemList.get(0).set(1, entryLimit);
+
+                ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit - 1));
+                allocMemList.add(entry);
+            } else {
+                System.out.println("Cannot fit PID " + pid + " in memory!");
+                return;
+            }
 
             // Find where to stick the next entry
         } else {
@@ -165,6 +188,8 @@ class MemoryManager {
                     if (!triedCompaction) {
                         this.runCompation();
                         modeFirstFit(newChunk, true);
+                    } else {
+                        System.out.println("Cannot fit PID " + pid + " in memory!");
                     }
                     return;
                 }
@@ -174,10 +199,11 @@ class MemoryManager {
             ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, worstFitBase, worstFitBase + newChunkSize));
             allocMemList.add(entry);
             Collections.sort(allocMemList, (Comparator<List<Integer>>) (o1, o2) -> o1.get(1).compareTo(o2.get(1)));
-        }
 
-        System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
-        System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+            System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+            System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+            return;
+        }
     }
 
     private void deallocateMemory(int pid) {
@@ -242,13 +268,18 @@ class MemoryManager {
 
         ArrayList<ArrayList<Integer>> newAllocMemList = new ArrayList<>();
         ArrayList<ArrayList<Integer>> newFreeMemList = new ArrayList<>();
-        int prevBase = 0;
+        int chunkSize;
+        int prevLimit = 0;
 
         for (ArrayList<Integer> chunk : this.allocMemList) {
-            newAllocMemList.add(new ArrayList<Integer>(Arrays.asList(chunk.get(0), prevBase, chunk.get(2))));
-            prevBase = chunk.get(2) + 1;
+            chunkSize = chunk.get(2) - chunk.get(1);
+            newAllocMemList.add(new ArrayList<Integer>(Arrays.asList(chunk.get(0), prevLimit, prevLimit + chunkSize)));
+            prevLimit += prevLimit + chunkSize;
+            System.out.println("Limit: " + prevLimit);
         }
-        newFreeMemList.add(new ArrayList<Integer>(Arrays.asList(null, prevBase, this.totalMem)));
+        int lastFinalLimit = newAllocMemList.get(newAllocMemList.size() - 1).get(2) + 1;
+        System.out.println("Final Limit: " + lastFinalLimit);
+        newFreeMemList.add(new ArrayList<Integer>(Arrays.asList(null, lastFinalLimit, this.totalMem)));
         this.allocMemList = newAllocMemList;
         this.freeMemList = newFreeMemList;
 
@@ -256,9 +287,8 @@ class MemoryManager {
         System.out.println("new Alloc Mem List: " + Arrays.deepToString(allocMemList.toArray()));
     }
 
-
     private void printMemoryAllocations() {
-        System.out.println("-------------- State of Memory -------------");
+        System.out.println("\n-------------- State of Memory -------------");
         String strFreeChunks = "Free Chunks: ";
         for (ArrayList<Integer> chunk : freeMemList) {
             strFreeChunks += "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
@@ -271,6 +301,7 @@ class MemoryManager {
         }
 
         System.out.println(strAllocChunks);
+        System.out.println("-------------------------------------------\n");
     }
 
 
