@@ -25,22 +25,19 @@ class MemoryManager {
         System.out.println(Arrays.deepToString(instructions.toArray()));
     }
 
-    private void modeFirstFit() {
+    private void modeFirstFit(int _pid, int _entryLimit) {
         System.out.println("Running ModeFirstFit");
 
-        for (int i = 0; i < instructions.size(); i++) {
-
-            String task = instructions.get(i).get(0);
-            switch (task) {
-                case "A":
-                    int pid = Integer.parseInt(instructions.get(i).get(1));
+            switch (this.mode) {
+                case 1:
+                    int pid = _pid;
                     int entryBase = 0;
-                    int entryLimit = Integer.parseInt(instructions.get(i).get(2));
+                    int entryLimit = _entryLimit;
 
                     // Mem empty -- stick first thing at 0
                     if (allocMemList.isEmpty()) {
                         System.out.println("Allocating mem to empty list");
-                        freeMemList.get(0).set(1, entryLimit);
+                        freeMemList.get(0).set(1, entryLimit + 1);
 
                         ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
                         allocMemList.add(entry);
@@ -50,7 +47,7 @@ class MemoryManager {
                         for (int j = 0; j < freeMemList.size(); j++) {
                             System.out.println("here 1");
 
-                            entryBase = freeMemList.get(j).get(1) + 1;
+                            entryBase = freeMemList.get(j).get(1);
                             System.out.println("Entry Base: " + entryBase);
 
                             if (entryBase + entryLimit <= totalMem) {
@@ -61,7 +58,7 @@ class MemoryManager {
 
                                 if (entryBase >= freeMemList.get(j).get(1) && entryLimit < freeMemList.get(j).get(2)) {
                                     System.out.println("here 3");
-                                    freeMemList.get(j).set(1, entryBase + entryLimit);
+                                    freeMemList.get(j).set(1, entryBase + entryLimit + 1);
 
                                     ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
                                     allocMemList.add(entry);
@@ -79,15 +76,15 @@ class MemoryManager {
                     System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
 
                     break;
-                case "D":
+                case 2:
                     break;
-                case "P":
+                case 3:
                     break;
 
 
             }
         }
-    }
+
 
 
     private void modeBestFit() {
@@ -104,18 +101,32 @@ class MemoryManager {
         ArrayList<Integer> freeMemInit = new ArrayList<>(Arrays.asList(null, 0, totalMem));
         freeMemList.add(freeMemInit);
 
-        switch (this.mode) {
-            case 1:
-                modeFirstFit();
-                break;
-            case 2:
-                modeBestFit();
-                break;
-            case 3:
-                modeWorstFit();
-                break;
-        }
+        for (int i = 2; i < instructions.size(); i++) {
+            String task = instructions.get(i).get(0);
 
+        switch (task) {
+            case "A":
+                switch (this.mode) {
+                    case 1:
+                        int pid = Integer.parseInt(instructions.get(i).get(1));
+                        int entryLimit = Integer.parseInt(instructions.get(i).get(2));
+
+                        modeFirstFit(pid, entryLimit);
+                        break;
+                    case 2:
+                        modeBestFit();
+                        break;
+                    case 3:
+                        modeWorstFit();
+                        break;
+                }
+                break;
+            case "D":
+                break;
+            case "P":
+                break;
+            }
+        }
 
     }
 
