@@ -95,6 +95,24 @@ class MemoryManager {
         System.out.println("Running ModeWorstFit");
     }
 
+    private void printMemoryAllocations() {
+        System.out.println("-------------- State of Memory -------------");
+        String strFreeChunks = "Free Chunks: ";
+        for(ArrayList<Integer> chunk : freeMemList) {
+//                    System.out.println("ff: " + Arrays.toString(chunk.toArray()));
+//                    System.out.println("ff: " + chunk.get(1));
+            strFreeChunks += "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
+        }
+        System.out.println(strFreeChunks);
+
+        String strAllocChunks = "Allocated Chunks: ";
+        for(ArrayList<Integer> chunk : allocMemList) {
+            strAllocChunks += "PID" + String.valueOf(chunk.get(0)) + "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
+        }
+
+        System.out.println(strAllocChunks);
+    }
+
     public void manageMemory() {
         System.out.println("Now managing memory");
 
@@ -124,6 +142,7 @@ class MemoryManager {
             case "D":
                 break;
             case "P":
+                this.printMemoryAllocations();
                 break;
             }
         }
