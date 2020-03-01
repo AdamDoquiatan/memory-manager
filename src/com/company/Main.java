@@ -26,71 +26,107 @@ class MemoryManager implements Comparable {
         System.out.println(Arrays.deepToString(instructions.toArray()));
     }
 
-    private void modeFirstFit(int _pid, int _entryLimit) {
+    private void modeFirstFit(ArrayList<String> newChunk) {
         System.out.println("Running ModeFirstFit");
 
-            switch (this.mode) {
-                case 1:
-                    int pid = _pid;
-                    int entryBase = 0;
-                    int entryLimit = _entryLimit;
+        int pid = Integer.parseInt(newChunk.get(1));
+        int entryBase = 0;
+        int entryLimit = Integer.parseInt(newChunk.get(2));;
 
-                    // Mem empty -- stick first thing at 0
-                    if (allocMemList.isEmpty()) {
-                        System.out.println("Allocating mem to empty list");
-                        freeMemList.get(0).set(1, entryLimit + 1);
+        // Mem empty -- stick first thing at 0
+        if (allocMemList.isEmpty()) {
+            System.out.println("Allocating mem to empty list");
+            freeMemList.get(0).set(1, entryLimit + 1);
+
+            ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+            allocMemList.add(entry);
+
+            // Find where to stick the next entry
+        } else {
+            for (int j = 0; j < freeMemList.size(); j++) {
+                entryBase = freeMemList.get(j).get(1);
+
+                if (entryBase + entryLimit <= totalMem) {
+                    System.out.println(entryBase >= freeMemList.get(j).get(1));
+                    System.out.println(entryBase < freeMemList.get(j).get(2));
+
+                    if (entryBase >= freeMemList.get(j).get(1) && entryLimit < freeMemList.get(j).get(2)) {
+                        freeMemList.get(j).set(1, entryBase + entryLimit + 1);
 
                         ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
                         allocMemList.add(entry);
+                        break;
+                    }
+                } else {
+                    System.out.println("No memory remaining (maybe run compaction)");
+                }
+            }
+        }
+
+        System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+        System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+    }
+
+    private void modeBestFit(ArrayList<String> newChunk) {
+        System.out.println("Running ModeBestFit");
+
+                int pid = Integer.parseInt(newChunk.get(1));
+                int entryBase = 0;
+                int entryLimit = Integer.parseInt(newChunk.get(2));
+                int newChunkSize = entryLimit;
+
+
+                // Mem empty -- stick first thing at 0
+                if (allocMemList.isEmpty()) {
+                    System.out.println("Allocating mem to empty list");
+                    freeMemList.get(0).set(1, entryLimit + 1);
+
+                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
+                    allocMemList.add(entry);
 
                     // Find where to stick the next entry
-                    } else {
-                        for (int j = 0; j < freeMemList.size(); j++) {
-                            System.out.println("here 1");
+                } else {
+                    int bestFitSize = Integer.MAX_VALUE;
+                    int bestFitBase = -1;
+                    int bestFitIndex = -1;
 
-                            entryBase = freeMemList.get(j).get(1);
-                            System.out.println("Entry Base: " + entryBase);
+                    for (int j = 0; j < freeMemList.size(); j++) {
 
-                            if (entryBase + entryLimit <= totalMem) {
-                                System.out.println("here 2");
+                        entryBase = freeMemList.get(j).get(1);
 
-                                System.out.println(entryBase >= freeMemList.get(j).get(1));
-                                System.out.println(entryBase < freeMemList.get(j).get(2));
 
-                                if (entryBase >= freeMemList.get(j).get(1) && entryLimit < freeMemList.get(j).get(2)) {
-                                    System.out.println("here 3");
-                                    freeMemList.get(j).set(1, entryBase + entryLimit + 1);
+                        // Checks that new chunk doesn't go beyond max memory
+                        if (entryBase + entryLimit <= totalMem) {
+                            System.out.println(entryBase >= freeMemList.get(j).get(1));
+                            System.out.println(entryBase < freeMemList.get(j).get(2));
 
-                                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, entryBase, entryBase + entryLimit));
-                                    allocMemList.add(entry);
-                                    break;
-                                } else {
-                                    System.out.println("here 5");
-                                }
-                            } else {
-                                System.out.println("No memory remaining (maybe run compaction)");
+                            // Checks if new chunk will fit in free space -- tracks smallest free spot
+                            int freeSpotSize = freeMemList.get(j).get(2) - freeMemList.get(j).get(1);
+                            if (newChunkSize <= freeSpotSize && freeSpotSize < bestFitSize) {
+                                  bestFitSize = freeSpotSize;
+                                  bestFitBase = freeMemList.get(j).get(1);
+                                  bestFitIndex = j;
                             }
+                        } else {
+                            System.out.println("No memory remaining (maybe run compaction)");
+                            return;
                         }
                     }
+                    freeMemList.get(bestFitIndex).set(1, bestFitBase + newChunkSize + 1);
 
-                    System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
-                    System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
+                    ArrayList<Integer> entry = new ArrayList<>(Arrays.asList(pid, bestFitBase, bestFitBase + newChunkSize));
+                    allocMemList.add(entry);
 
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
+                }
 
-
-            }
+                System.out.println("Free: " + Arrays.deepToString(freeMemList.toArray()));
+                System.out.println("Alloc: " + Arrays.deepToString(allocMemList.toArray()));
         }
 
 
 
-    private void modeBestFit() {
-        System.out.println("Running ModeBestFit");
-    }
+
+
 
     private void modeWorstFit() {
         System.out.println("Running ModeWorstFit");
@@ -99,14 +135,15 @@ class MemoryManager implements Comparable {
     private void deallocateMemory(int pid) {
         System.out.println("Deallocating Memory for PID: " + pid);
 
-        for(ArrayList<Integer> chunk : allocMemList) {
-            if(chunk.get(0) == pid) {
+        for (ArrayList<Integer> chunk : allocMemList) {
+            if (chunk.get(0) == pid) {
                 int allocChunkBase = chunk.get(1);
                 int allocChunkLimit = chunk.get(2);
                 allocMemList.remove(chunk);
 
+                //TODO: Doesn't always merge free adjacent partitions (but does sometimes?)
                 boolean merged = false;
-                for(ArrayList<Integer> freeChunk : freeMemList) {
+                for (ArrayList<Integer> freeChunk : freeMemList) {
                     System.out.println("Alloc Base: " + (allocChunkBase - 1));
                     System.out.println("Free Limit: " + (freeChunk.get(2)));
                     if (allocChunkBase - 1 == freeChunk.get(2)) {
@@ -133,6 +170,7 @@ class MemoryManager implements Comparable {
                     System.out.println("Index of newfreechunk: " + freeMemList.indexOf(newFreeChunk));
                     int freeChunkIndex = freeMemList.indexOf(newFreeChunk);
 
+                    // TODO: Messes up the output
                     //Checks if new floor is lesser than below mem's ceiling -- makes new arraylist
 //                if(freeMemList.size() > freeChunkIndex + 1 && newFreeChunk.get(1) <= freeMemList.get(freeChunkIndex + 1).get(2)) {
 //                    freeMemList.add(new ArrayList<Integer>(Arrays.asList(null, freeMemList.get(freeChunkIndex + 1).get(1), newFreeChunk.get(1) - 1)));
@@ -153,7 +191,7 @@ class MemoryManager implements Comparable {
     private void printMemoryAllocations() {
         System.out.println("-------------- State of Memory -------------");
         String strFreeChunks = "Free Chunks: ";
-        for(ArrayList<Integer> chunk : freeMemList) {
+        for (ArrayList<Integer> chunk : freeMemList) {
 //                    System.out.println("ff: " + Arrays.toString(chunk.toArray()));
 //                    System.out.println("ff: " + chunk.get(1));
             strFreeChunks += "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
@@ -161,13 +199,12 @@ class MemoryManager implements Comparable {
         System.out.println(strFreeChunks);
 
         String strAllocChunks = "Allocated Chunks: ";
-        for(ArrayList<Integer> chunk : allocMemList) {
+        for (ArrayList<Integer> chunk : allocMemList) {
             strAllocChunks += "PID" + String.valueOf(chunk.get(0)) + "[ " + String.valueOf(chunk.get(1)) + "->" + String.valueOf(chunk.get(2)) + " ] ";
         }
 
         System.out.println(strAllocChunks);
     }
-
 
 
     public void manageMemory() {
@@ -177,33 +214,32 @@ class MemoryManager implements Comparable {
         freeMemList.add(freeMemInit);
 
         for (int i = 2; i < instructions.size(); i++) {
+            ArrayList<String> newChunk = instructions.get(i);
+
             String task = instructions.get(i).get(0);
 
-        switch (task) {
-            case "A":
-                switch (this.mode) {
-                    case 1:
-                        int pid = Integer.parseInt(instructions.get(i).get(1));
-                        int entryLimit = Integer.parseInt(instructions.get(i).get(2));
+            switch (task) {
+                case "A":
+                    switch (this.mode) {
+                        case 1:
+                            modeFirstFit(newChunk);
+                            break;
+                        case 2:
+                            modeBestFit(newChunk);
+                            break;
+                        case 3:
+                            modeWorstFit();
+                            break;
+                    }
+                    break;
+                case "D":
+                    int pid = Integer.parseInt(instructions.get(i).get(1));
+                    this.deallocateMemory(pid);
 
-                        modeFirstFit(pid, entryLimit);
-                        break;
-                    case 2:
-                        modeBestFit();
-                        break;
-                    case 3:
-                        modeWorstFit();
-                        break;
-                }
-                break;
-            case "D":
-                int pid = Integer.parseInt(instructions.get(i).get(1));
-                this.deallocateMemory(pid);
-
-                break;
-            case "P":
-                this.printMemoryAllocations();
-                break;
+                    break;
+                case "P":
+                    this.printMemoryAllocations();
+                    break;
             }
         }
 
